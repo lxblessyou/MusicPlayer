@@ -1,4 +1,4 @@
-package demo.test.user.musicplayer;
+package demo.test.user.musicplayer.activity;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -6,6 +6,8 @@ import android.os.Bundle;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import demo.test.user.musicplayer.R;
 
 public class SplashActivity extends AppCompatActivity {
 
