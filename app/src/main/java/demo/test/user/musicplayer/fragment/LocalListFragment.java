@@ -1,37 +1,30 @@
 package demo.test.user.musicplayer.fragment;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import demo.test.user.musicplayer.MyApp;
 import demo.test.user.musicplayer.R;
-import demo.test.user.musicplayer.adapter.LocalListAdapter;
+import demo.test.user.musicplayer.activity.MainActivity;
+import demo.test.user.musicplayer.adapter.MusicListAdapter;
 import demo.test.user.musicplayer.bean.Mp3Info;
-import demo.test.user.musicplayer.utils.MediaUtil;
+import demo.test.user.musicplayer.service.PlayerService;
 
 /**
  * Created by user on 2018-01-02.
  */
-public class LocalListFragment extends Fragment {
+public class LocalListFragment extends Fragment implements AdapterView.OnItemClickListener {
     private Context context;
+    private MainActivity activity;
 
     private ListView lv_local;
-    private LocalListAdapter adapter;
+    private MusicListAdapter adapter;
 
     /**
      * 获取实例
@@ -51,17 +44,29 @@ public class LocalListFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         this.context = context;
+        this.activity = (MainActivity) context;
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_local, container, false);
-        // 1.
+        // 1.初始化 ListView
         lv_local = view.findViewById(R.id.lv_local);
-        adapter = new LocalListAdapter(context, MyApp.localList);
+        adapter = new MusicListAdapter(context, PlayerService.localList);
         lv_local.setAdapter(adapter);
+        lv_local.setOnItemClickListener(this);
         return view;
     }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Mp3Info mp3Info = PlayerService.localList.get(position);
+        activity.setBottomTitle(mp3Info.getTitle());
+        activity.setBottomArtist(mp3Info.getArtist());
+//        activity.setBottomArtwork(mp3Info.get_id(),mp3Info.getAlbumId());
+        activity.setBottomPlayBtnState(true);
+        activity.getPlayerService().play(position);
+//        Log.i("tag", "onItemClick: position:" + position + " size:" + PlayerService.localList.size());
+    }
 }

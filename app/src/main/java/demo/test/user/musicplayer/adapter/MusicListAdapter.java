@@ -1,6 +1,8 @@
 package demo.test.user.musicplayer.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +19,12 @@ import demo.test.user.musicplayer.utils.MediaUtil;
 /**
  * Created by user on 2018-01-02.
  */
-public class LocalListAdapter extends BaseAdapter{
+public class MusicListAdapter extends BaseAdapter{
     private Context context;
     private List<Mp3Info> list;
     private LayoutInflater inflater;
 
-    public LocalListAdapter(Context context, List<Mp3Info> list) {
+    public MusicListAdapter(Context context, List<Mp3Info> list) {
         this.context = context;
         this.list = list;
         inflater = LayoutInflater.from(context);
@@ -58,17 +60,40 @@ public class LocalListAdapter extends BaseAdapter{
         } else {
             holder = (Holder) convertView.getTag();
         }
+//        String album = mp3Info.getAlbum();
+//        Log.i("tag", "getView: album:"+album+" albumId:"+albumId);
+        long _id = mp3Info.get_id();
         String title = mp3Info.getTitle();
         String artist = mp3Info.getArtist();
+        long albumId = mp3Info.getAlbumId();
         long duration = mp3Info.getDuration();
+        // 显示歌曲名
         holder.tv_title.setText(title);
+        // 初始化艺术家名称
+        initArtist(holder, artist);
+        // 显示专辑插图,卡
+//        showArtwork(holder, _id, albumId);
+        // 显示时长
+        holder.tv_duration.setText(MediaUtil.millToSecond(duration));
+        return convertView;
+    }
+
+    private void showArtwork(Holder holder, long _id, long albumId) {
+        try {
+            Bitmap artwork = MediaUtil.getArtwork(context, _id, albumId, true, true);
+            holder.iv_album.setImageBitmap(artwork);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i("tag", e.toString());
+        }
+    }
+
+    private void initArtist(Holder holder, String artist) {
         if ("<unknown>".equals(artist)) {
             holder.tv_artist.setText("未知");
         } else {
             holder.tv_artist.setText(artist);
         }
-        holder.tv_duration.setText(MediaUtil.longToDate(duration));
-        return convertView;
     }
 
     class Holder {

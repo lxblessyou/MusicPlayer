@@ -1,5 +1,7 @@
 package demo.test.user.musicplayer.bean;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by user on 2018-01-02.
  */
@@ -10,7 +12,7 @@ public class Mp3Info {
     private long _id;
     private String title;//歌名
     private String artist;//艺术家
-    private String album;//专辑
+    private String album;//专辑名称
     private long albumId;// 专辑封面 id
     private long duration;//时长
     private long size;//大小
