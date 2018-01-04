@@ -19,6 +19,11 @@ import demo.test.user.musicplayer.utils.MediaUtil;
 public class SplashActivity extends BaseActivity {
 
     @Override
+    protected void initUI(int index) {
+
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
@@ -30,6 +35,21 @@ public class SplashActivity extends BaseActivity {
             // 如果权限已注册则开启定时器任务
             startTimer();
         }
+
+    }
+
+    @Override
+    public void updateUI(int index) {
+
+    }
+
+    @Override
+    public void publishSeekBar(int progress) {
+
+    }
+
+    @Override
+    public void publishPlayTime(int progress) {
 
     }
 

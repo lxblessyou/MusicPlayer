@@ -8,11 +8,12 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import demo.test.user.musicplayer.R;
 import demo.test.user.musicplayer.service.PlayerService;
 
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity implements PlayerService.PlayerServiceCallback {
     protected PlayerService.MyBinder myBinder;
     protected PlayerService playerService;
 
@@ -30,20 +31,38 @@ public abstract class BaseActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             myBinder = (PlayerService.MyBinder) service;
             playerService = myBinder.getService();
+//            Log.i("tag", "onServiceConnected: "+playerService);
             myBinder.setActivity(BaseActivity.this);
+            playerService.setPlayerServiceCallback(BaseActivity.this);
+            try {
+                initUI(playerService.getCurrentIndex());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
+            myBinder = null;
         }
     };
+
+    protected abstract void initUI(int index);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        Log.i("tag", "onCreate: ");
         // 1.绑定服务
         bindService();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (playerService != null) {
+            initUI(playerService.getCurrentIndex());
+        }
     }
 
     @Override
@@ -51,6 +70,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onDestroy();
         if (isBind) {
             unbindService(conn);
+            isBind = false;
         }
     }
 
@@ -59,4 +79,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         bindService(intent, conn, BIND_AUTO_CREATE);
         isBind = true;
     }
+
+    @Override
+    public abstract void updateUI(int index);
+
+    @Override
+    public abstract void publishSeekBar(int progress);
+
+    @Override
+    public abstract void publishPlayTime(int progress) ;
 }

@@ -1,11 +1,13 @@
 package demo.test.user.musicplayer.bean;
 
 import android.graphics.Bitmap;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * Created by user on 2018-01-02.
  */
-public class Mp3Info {
+public class Mp3Info implements Parcelable {
     /**
      * 数据库歌曲信息
      */
@@ -138,4 +140,55 @@ public class Mp3Info {
                 ", isMusic=" + isMusic +
                 '}';
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this._id);
+        dest.writeString(this.title);
+        dest.writeString(this.artist);
+        dest.writeString(this.album);
+        dest.writeLong(this.albumId);
+        dest.writeLong(this.duration);
+        dest.writeLong(this.size);
+        dest.writeString(this.data);
+        dest.writeInt(this.isMusic);
+        dest.writeLong(this.playTime);
+        dest.writeLong(this.mp3InfoId);
+        dest.writeInt(this.isLike);
+    }
+
+    public Mp3Info() {
+    }
+
+    protected Mp3Info(Parcel in) {
+        this._id = in.readLong();
+        this.title = in.readString();
+        this.artist = in.readString();
+        this.album = in.readString();
+        this.albumId = in.readLong();
+        this.duration = in.readLong();
+        this.size = in.readLong();
+        this.data = in.readString();
+        this.isMusic = in.readInt();
+        this.playTime = in.readLong();
+        this.mp3InfoId = in.readLong();
+        this.isLike = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Mp3Info> CREATOR = new Parcelable.Creator<Mp3Info>() {
+        @Override
+        public Mp3Info createFromParcel(Parcel source) {
+            return new Mp3Info(source);
+        }
+
+        @Override
+        public Mp3Info[] newArray(int size) {
+            return new Mp3Info[size];
+        }
+    };
 }

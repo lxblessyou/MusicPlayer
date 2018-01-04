@@ -1,20 +1,14 @@
 package demo.test.user.musicplayer.activity;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.media.MediaPlayer;
-import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,12 +17,13 @@ import com.astuetz.PagerSlidingTabStrip;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import demo.test.user.musicplayer.R;
-import demo.test.user.musicplayer.adapter.MusicListAdapter;
 import demo.test.user.musicplayer.bean.Mp3Info;
 import demo.test.user.musicplayer.fragment.LocalListFragment;
 import demo.test.user.musicplayer.fragment.NetListFragment;
 import demo.test.user.musicplayer.service.PlayerService;
 import demo.test.user.musicplayer.utils.MediaUtil;
+
+import static android.content.ContentValues.TAG;
 
 public class MainActivity extends BaseActivity {
     private PagerSlidingTabStrip tabs;
@@ -48,6 +43,17 @@ public class MainActivity extends BaseActivity {
     private ImageView iv_play;
     private ImageView iv_next;
 
+    @Override
+    protected void initUI(int index) {
+        if (playerService != null) {
+            Mp3Info mp3Info = PlayerService.localList.get(index);
+            String title = mp3Info.getTitle();
+            String artist = mp3Info.getArtist();
+            tv_title.setText(title);
+            tv_artist.setText(artist);
+            setBottomPlayBtnState(PlayerService.mediaPlayer.isPlaying());
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +67,17 @@ public class MainActivity extends BaseActivity {
         initBottomView();
     }
 
+
+    @Override
+    public void publishSeekBar(int progress) {
+
+    }
+
+    @Override
+    public void publishPlayTime(int progress) {
+
+    }
+
     private void initViewPager() {
         vp_main = (ViewPager) findViewById(R.id.vp_main);
         adapter = new MyPagerAdapter(getSupportFragmentManager());
@@ -69,8 +86,8 @@ public class MainActivity extends BaseActivity {
 
     private void initPagerSlidingTabStrip() {
         tabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
-        tabs.setViewPager(vp_main); // 绑定 ViewPager
         tabs.setShouldExpand(true); // 设置tab可扩展，可实现标签均分宽度。Java代码设置必须放在其他属性设置前，否则无效
+        tabs.setViewPager(vp_main); // 绑定 ViewPager
         tabs.setIndicatorColor(currentColor);   // 设置tab下方指示器颜色
 //        tabs.setDividerColor(currentColor); // 设置tab之间分割器颜色
     }
@@ -87,7 +104,8 @@ public class MainActivity extends BaseActivity {
         ll_bottom_click.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, PlayerActivity.class));
+                Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
+                startActivity(intent);
             }
         });
         // 播放按钮点击事件
@@ -97,8 +115,10 @@ public class MainActivity extends BaseActivity {
                 setBottomPlayBtnState(!PlayerService.mediaPlayer.isPlaying());
                 if (PlayerService.mediaPlayer.isPlaying()) {
                     playerService.pause();
-                } else {
+                } else if (!playerService.getIsFirst()){
                     playerService.continueToPlay();
+                }else {
+                    playerService.play(0);
                 }
             }
         });
@@ -108,7 +128,7 @@ public class MainActivity extends BaseActivity {
             public void onClick(View v) {
                 setBottomPlayBtnState(true);
                 playerService.prev();
-                updateBottomUI(playerService.getCurrentIndex());
+                updateUI(playerService.getCurrentIndex());
             }
         });
         // 下一曲
@@ -117,17 +137,11 @@ public class MainActivity extends BaseActivity {
             public void onClick(View v) {
                 setBottomPlayBtnState(true);
                 playerService.next();
-                updateBottomUI(playerService.getCurrentIndex());
+                updateUI(playerService.getCurrentIndex());
             }
         });
     }
 
-    public void updateBottomUI(int index) {
-        Mp3Info mp3Info = PlayerService.localList.get(index);
-        setBottomPlayBtnState(true);
-        setBottomTitle(mp3Info.getTitle());
-        setBottomArtist(mp3Info.getArtist());
-    }
 
     public class MyPagerAdapter extends FragmentPagerAdapter {
 
@@ -168,6 +182,13 @@ public class MainActivity extends BaseActivity {
 
     }
 
+    @Override
+    public void updateUI(int index) {
+        Mp3Info currentMp3Info = PlayerService.localList.get(index);
+        setBottomPlayBtnState(true);
+        setBottomTitle(currentMp3Info.getTitle());
+        setBottomArtist(currentMp3Info.getArtist());
+    }
     /**
      * @param title
      */
