@@ -16,40 +16,19 @@ import demo.test.user.musicplayer.R;
 import demo.test.user.musicplayer.service.PlayerService;
 import demo.test.user.musicplayer.utils.MediaUtil;
 
-public class SplashActivity extends BaseActivity {
-
-    @Override
-    protected void initUI(int index) {
-
-    }
-
+public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         } else {
             Intent intent = new Intent(this, PlayerService.class);
             startService(intent);
             // 如果权限已注册则开启定时器任务
             startTimer();
         }
-
-    }
-
-    @Override
-    public void updateUI(int index) {
-
-    }
-
-    @Override
-    public void publishSeekBar(int progress) {
-
-    }
-
-    @Override
-    public void publishPlayTime(int progress) {
 
     }
 

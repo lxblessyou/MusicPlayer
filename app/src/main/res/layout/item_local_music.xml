@@ -10,7 +10,7 @@
     <ImageView
         android:layout_width="68dp"
         android:layout_height="68dp"
-        app:srcCompat="@mipmap/music_album"
+        app:srcCompat="@mipmap/music"
         android:id="@+id/iv_album" />
 
     <LinearLayout

@@ -110,9 +110,13 @@ public class MediaUtil {
      * @return
      */
     public static ArrayList<Mp3Info> getMp3Infos(Context context) {
+//        Cursor cursor = context.getContentResolver().query(
+//        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
+//                MediaStore.Audio.Media.DURATION + ">=180000", null,
+//                MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
         Cursor cursor = context.getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,
-                MediaStore.Audio.Media.DURATION + ">=180000", null,
+                null, null,
                 MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
 
         ArrayList<Mp3Info> mp3Infos = new ArrayList<Mp3Info>();
@@ -300,6 +304,7 @@ public class MediaUtil {
         }
         ContentResolver res = context.getContentResolver();
         Uri uri = ContentUris.withAppendedId(albumArtUri, album_id);
+        Log.i("tag", "getArtwork: uri:"+uri);
         if (uri != null) {
             InputStream in = null;
             try {
@@ -323,6 +328,7 @@ public class MediaUtil {
                 options.inDither = false;
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 in = res.openInputStream(uri);
+//                Log.i("tag", "getArtwork: try");
                 return BitmapFactory.decodeStream(in, null, options);
             } catch (FileNotFoundException e) {
                 Bitmap bm = getArtworkFromFile(context, song_id, album_id);

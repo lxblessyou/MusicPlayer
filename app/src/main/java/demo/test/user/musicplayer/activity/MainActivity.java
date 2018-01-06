@@ -1,13 +1,12 @@
 package demo.test.user.musicplayer.activity;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.IntentFilter;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -22,8 +21,6 @@ import demo.test.user.musicplayer.fragment.LocalListFragment;
 import demo.test.user.musicplayer.fragment.NetListFragment;
 import demo.test.user.musicplayer.service.PlayerService;
 import demo.test.user.musicplayer.utils.MediaUtil;
-
-import static android.content.ContentValues.TAG;
 
 public class MainActivity extends BaseActivity {
     private PagerSlidingTabStrip tabs;
@@ -42,18 +39,6 @@ public class MainActivity extends BaseActivity {
     private ImageView iv_pre;
     private ImageView iv_play;
     private ImageView iv_next;
-
-    @Override
-    protected void initUI(int index) {
-        if (playerService != null) {
-            Mp3Info mp3Info = PlayerService.localList.get(index);
-            String title = mp3Info.getTitle();
-            String artist = mp3Info.getArtist();
-            tv_title.setText(title);
-            tv_artist.setText(artist);
-            setBottomPlayBtnState(PlayerService.mediaPlayer.isPlaying());
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,22 +97,26 @@ public class MainActivity extends BaseActivity {
         iv_play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setBottomPlayBtnState(!PlayerService.mediaPlayer.isPlaying());
+                int currentIndex = playerService.getCurrentIndex();
                 if (PlayerService.mediaPlayer.isPlaying()) {
                     playerService.pause();
+                    playerService.setPlaying(false);
                 } else if (!playerService.getIsFirst()){
                     playerService.continueToPlay();
+                    playerService.setPlaying(true);
                 }else {
-                    playerService.play(0);
+                    playerService.play(currentIndex);
+                    playerService.setPlaying(true);
                 }
+                updateUI(currentIndex);
             }
         });
         // 上一曲
         iv_pre.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setBottomPlayBtnState(true);
                 playerService.prev();
+                playerService.setPlaying(true);
                 updateUI(playerService.getCurrentIndex());
             }
         });
@@ -135,8 +124,8 @@ public class MainActivity extends BaseActivity {
         iv_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setBottomPlayBtnState(true);
                 playerService.next();
+                playerService.setPlaying(true);
                 updateUI(playerService.getCurrentIndex());
             }
         });
@@ -181,46 +170,33 @@ public class MainActivity extends BaseActivity {
         }
 
     }
-
     @Override
     public void updateUI(int index) {
-        Mp3Info currentMp3Info = PlayerService.localList.get(index);
-        setBottomPlayBtnState(true);
-        setBottomTitle(currentMp3Info.getTitle());
-        setBottomArtist(currentMp3Info.getArtist());
-    }
-    /**
-     * @param title
-     */
-    public void setBottomTitle(String title) {
-        tv_title.setText(title);
-    }
-
-    /**
-     * @param artist
-     */
-    public void setBottomArtist(String artist) {
-        tv_artist.setText(artist);
-    }
-    public void setBottomArtwork(long _id, long albumId) {
-        try {
-//            Log.i("tag", _id+"--"+albumId);
-            Bitmap artwork = MediaUtil.getArtwork(this, _id, albumId, true, true);
-            if (artwork!=null) {
-                civ_album.setImageBitmap(artwork);
-            } else {
-                civ_album.setImageResource(R.mipmap.music_album);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (playerService != null) {
+            Mp3Info mp3Info = PlayerService.localList.get(index);
+            String title = mp3Info.getTitle();
+            String artist = mp3Info.getArtist();
+            tv_title.setText(title);
+            tv_artist.setText(artist);
+            long id = mp3Info.get_id();
+            long albumId = mp3Info.getAlbumId();
+            civ_album.setImageBitmap(MediaUtil.getArtwork(this,id,albumId,true,true));
+//            if (!isFirst) {
+//                setPlayBtnState(PlayerService.mediaPlayer.isPlaying());
+//            }else {
+//                setPlayBtnState(false);
+//            }
+            setPlayBtnState();
         }
+//        isFirst = false;
     }
 
     /**
-     * @param isPlaying
+     * 设置播放按钮状态
      */
-    public void setBottomPlayBtnState(boolean isPlaying) {
-        if (isPlaying) {
+    public void setPlayBtnState() {
+//        Log.i(TAG, "setPlayBtnState: "+playerService.getIsFirst());
+        if (playerService.isPlaying()) {
             iv_play.setImageResource(R.mipmap.pause);
         } else {
             iv_play.setImageResource(R.mipmap.play);

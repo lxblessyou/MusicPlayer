@@ -33,9 +33,9 @@ public abstract class BaseActivity extends AppCompatActivity implements PlayerSe
             playerService = myBinder.getService();
 //            Log.i("tag", "onServiceConnected: "+playerService);
             myBinder.setActivity(BaseActivity.this);
-            playerService.setPlayerServiceCallback(BaseActivity.this);
+//            playerService.setPlayerServiceCallback(BaseActivity.this);
             try {
-                initUI(playerService.getCurrentIndex());
+                updateUI(playerService.getCurrentIndex());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -46,8 +46,6 @@ public abstract class BaseActivity extends AppCompatActivity implements PlayerSe
             myBinder = null;
         }
     };
-
-    protected abstract void initUI(int index);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +59,15 @@ public abstract class BaseActivity extends AppCompatActivity implements PlayerSe
     protected void onStart() {
         super.onStart();
         if (playerService != null) {
-            initUI(playerService.getCurrentIndex());
+            updateUI(playerService.getCurrentIndex());
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (playerService!=null) {
+            updateUI(playerService.getCurrentIndex());
         }
     }
 

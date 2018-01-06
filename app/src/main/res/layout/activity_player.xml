@@ -13,12 +13,12 @@
     tools:context="demo.test.user.musicplayer.activity.PlayerActivity">
 
     <ImageView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:srcCompat="@mipmap/music_album"
         android:id="@+id/iv_album"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -32,7 +32,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:layout_alignParentBottom="true">
 
         <SeekBar
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/sb_progress"
-            android:id="@+id/tv_current_progress" />
+            android:id="@+id/rl_controller" />
         <TextView
             android:text="00:00"
             android:layout_width="wrap_content"
@@ -56,8 +56,9 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tv_current_progress"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_below="@id/rl_controller"
             android:gravity="center_vertical">
 
             <ImageView
@@ -65,7 +66,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="5dp"
-                android:layout_marginLeft="10dp"
                 app:srcCompat="@mipmap/order" />
 
             <ImageView
@@ -75,7 +75,7 @@
                 android:padding="5dp"
                 android:layout_marginLeft="10dp"
                 android:layout_alignParentRight="true"
-                app:srcCompat="@mipmap/prev2" />
+                app:srcCompat="@mipmap/next2" />
 
             <ImageView
                 android:id="@+id/iv_play"
@@ -94,6 +94,14 @@
                 android:layout_marginLeft="10dp"
                 android:layout_toLeftOf="@id/iv_play"
                 app:srcCompat="@mipmap/prev2" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@mipmap/xin_bai"
+                android:layout_toRightOf="@id/iv_order"
+                android:layout_marginRight="18dp"
+                android:id="@+id/iv_star" />
         </RelativeLayout>
 
 
