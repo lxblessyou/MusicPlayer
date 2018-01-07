@@ -30,7 +30,9 @@
             android:exported="true" />
 
         <activity android:name=".activity.PlayerActivity" />
-        <activity android:name=".activity.BaseActivity"></activity>
+        <activity android:name=".activity.BaseActivity" />
+        <activity android:name=".activity.LikeActivity" />
+        <activity android:name=".activity.LatelyActivity"></activity>
     </application>
 
 </manifest>

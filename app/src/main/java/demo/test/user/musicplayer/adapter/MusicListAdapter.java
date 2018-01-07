@@ -2,7 +2,6 @@ package demo.test.user.musicplayer.adapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +50,7 @@ public class MusicListAdapter extends BaseAdapter{
         Holder holder = null;
         if (convertView == null) {
             holder = new Holder();
-            convertView = inflater.inflate(R.layout.item_local_music, parent, false);
+            convertView = inflater.inflate(R.layout.item_music, parent, false);
             holder.iv_album = convertView.findViewById(R.id.iv_album);
             holder.tv_title = convertView.findViewById(R.id.tv_title);
             holder.tv_artist = convertView.findViewById(R.id.tv_artist);
@@ -62,7 +61,7 @@ public class MusicListAdapter extends BaseAdapter{
         }
 //        String album = mp3Info.getAlbum();
 //        Log.i("tag", "getView: album:"+album+" albumId:"+albumId);
-        long _id = mp3Info.get_id();
+        long _id = mp3Info.getSong_id();
         String title = mp3Info.getTitle();
         String artist = mp3Info.getArtist();
         long albumId = mp3Info.getAlbumId();
@@ -84,7 +83,7 @@ public class MusicListAdapter extends BaseAdapter{
             holder.iv_album.setImageBitmap(artwork);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.i("tag", e.toString());
+//            Log.i("tag", e.toString());
         }
     }
 

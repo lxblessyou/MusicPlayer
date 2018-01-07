@@ -24,12 +24,14 @@
             android:text="title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:lines="1"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:id="@+id/tv_title" />
 
         <TextView
             android:text="artist"
+            android:paddingTop="2dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:lines="1"
@@ -41,5 +43,6 @@
         android:text="duration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingLeft="20sp"
         android:id="@+id/tv_duration" />
 </LinearLayout>

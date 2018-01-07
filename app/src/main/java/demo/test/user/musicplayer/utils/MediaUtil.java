@@ -67,7 +67,7 @@ public class MediaUtil {
             int isMusic = cursor.getInt(cursor
                     .getColumnIndex(MediaStore.Audio.Media.IS_MUSIC)); // 是否为音乐
             if (isMusic != 0) { // 只把音乐添加到集合当中
-                mp3Info.set_id(id);
+                mp3Info.setSong_id(id);
                 mp3Info.setTitle(title);
                 mp3Info.setArtist(artist);
                 mp3Info.setAlbum(album);
@@ -123,7 +123,7 @@ public class MediaUtil {
         for (int i = 0; i < cursor.getCount(); i++) {
             cursor.moveToNext();
             Mp3Info mp3Info = new Mp3Info();
-            long id = cursor.getLong(cursor
+            long song_id = cursor.getLong(cursor
                     .getColumnIndex(MediaStore.Audio.Media._ID)); // 音乐id
             String title = cursor.getString((cursor
                     .getColumnIndex(MediaStore.Audio.Media.TITLE))); // 音乐标题
@@ -142,7 +142,7 @@ public class MediaUtil {
             int isMusic = cursor.getInt(cursor
                     .getColumnIndex(MediaStore.Audio.Media.IS_MUSIC)); // 是否为音乐
             if (isMusic != 0) { // 只把音乐添加到集合当中
-                mp3Info.set_id(id);
+                mp3Info.setSong_id(song_id);
                 mp3Info.setTitle(title);
                 mp3Info.setArtist(artist);
                 mp3Info.setAlbum(album);
@@ -304,7 +304,7 @@ public class MediaUtil {
         }
         ContentResolver res = context.getContentResolver();
         Uri uri = ContentUris.withAppendedId(albumArtUri, album_id);
-        Log.i("tag", "getArtwork: uri:"+uri);
+//        Log.i("tag", "getArtwork: uri:"+uri);
         if (uri != null) {
             InputStream in = null;
             try {

@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.io.IOException;
+import java.nio.MappedByteBuffer;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executor;
@@ -20,6 +21,7 @@ import demo.test.user.musicplayer.activity.BaseActivity;
 import demo.test.user.musicplayer.activity.MainActivity;
 import demo.test.user.musicplayer.activity.PlayerActivity;
 import demo.test.user.musicplayer.bean.Mp3Info;
+import demo.test.user.musicplayer.constants.ConstantsForSelf;
 import demo.test.user.musicplayer.utils.MediaUtil;
 
 import static android.content.ContentValues.TAG;
@@ -27,6 +29,7 @@ import static android.content.ContentValues.TAG;
 public class PlayerService extends Service {
     public static MediaPlayer mediaPlayer;
     public static List<Mp3Info> localList;
+    public List<Mp3Info> mLikeList;
     private Random mRandom;
     private int currentIndex;
     private int currentProgress;
@@ -35,22 +38,14 @@ public class PlayerService extends Service {
     private MainActivity mainActivity;
     private PlayerActivity playerActivity;
 
-//    private PlayerServiceCallback playerServiceCallback;
-
     public static final int ORDER_MODE = 0;
     public static final int RANDOM_MODE = 1;
     public static final int SINGLE_MODE = 2;
     private int orderMode = ORDER_MODE;
 
-    private boolean isPlaying = false;
+    private SharedPreferences mSp;
 
-    public boolean isPlaying() {
-        return isPlaying;
-    }
-
-    public void setPlaying(boolean playing) {
-        isPlaying = playing;
-    }
+    private Intent mIntent;
 
     public int getOrderMode() {
         return orderMode;
@@ -64,10 +59,6 @@ public class PlayerService extends Service {
         return isFirst;
     }
 
-//    public void setPlayerServiceCallback(PlayerServiceCallback playerServiceCallback) {
-//        this.playerServiceCallback = playerServiceCallback;
-//    }
-
     public int getCurrentProgress() {
         return currentProgress;
     }
@@ -76,7 +67,12 @@ public class PlayerService extends Service {
         return currentIndex;
     }
 
-    public PlayerService() {}
+    public void setmLikeList(List<Mp3Info> mLikeList) {
+        this.mLikeList = mLikeList;
+    }
+
+    public PlayerService() {
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -125,12 +121,16 @@ public class PlayerService extends Service {
      * 初始化SharedPreferences数据
      */
     private void initPreferences() {
-        currentIndex = MyApp.sp.getInt(MyApp.KEY_INDEX, 0);
-        orderMode = MyApp.sp.getInt(MyApp.KEY_MODE, ORDER_MODE);
+        if (mSp == null) {
+            mSp = MyApp.getSp();
+        }
+        currentIndex = mSp.getInt(ConstantsForSelf.KEY_INDEX, 0);
+        orderMode = mSp.getInt(ConstantsForSelf.KEY_MODE, ORDER_MODE);
     }
 
     /**
      * 播放
+     *
      * @param index 列表索引
      */
     public void play(final int index) {
@@ -143,6 +143,12 @@ public class PlayerService extends Service {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     mediaPlayer.start();
+                    if (mIntent == null) {
+                        mIntent = new Intent(ConstantsForSelf.ACTION_UPDATE_UI_RECEIVER);
+                    }
+                    if (mainActivity != null || playerActivity != null) {
+                        sendBroadcast(mIntent);
+                    }
 //                    Log.i(TAG, "onPrepared: "+Thread.currentThread().getName());
                 }
             });
@@ -153,9 +159,12 @@ public class PlayerService extends Service {
         currentIndex = index;
         // 改变是否首次播放的标记
         isFirst = false;
-        SharedPreferences.Editor edit = MyApp.sp.edit();
-        edit.putInt(MyApp.KEY_INDEX, currentIndex);
-        edit.putInt(MyApp.KEY_MODE, orderMode);
+        if (mSp == null) {
+            mSp = MyApp.getSp();
+        }
+        SharedPreferences.Editor edit = mSp.edit();
+        edit.putInt(ConstantsForSelf.KEY_INDEX, currentIndex);
+        edit.putInt(ConstantsForSelf.KEY_MODE, orderMode);
         edit.commit();
     }
 
@@ -235,10 +244,15 @@ public class PlayerService extends Service {
 
     /**
      * 拖动播放进度
-     * @param position  目标进度
+     *
+     * @param position 目标进度
      */
     public void seekTo(int position) {
         mediaPlayer.seekTo(position);
+    }
+
+    public void setCurrentIndex(int currentIndex) {
+        this.currentIndex = currentIndex;
     }
 
 
@@ -248,6 +262,7 @@ public class PlayerService extends Service {
     public class MyBinder extends Binder {
         /**
          * 设置Activity对象
+         *
          * @param baseActivity
          */
         public void setActivity(BaseActivity baseActivity) {
@@ -260,21 +275,11 @@ public class PlayerService extends Service {
 
         /**
          * 获取服务对象
+         *
          * @return
          */
         public PlayerService getService() {
             return PlayerService.this;
         }
-    }
-
-    /**
-     * 服务回调接口
-     */
-    public interface PlayerServiceCallback {
-        void updateUI(int index);
-
-        void publishSeekBar(int progress);
-
-        void publishPlayTime(int progress);
     }
 }

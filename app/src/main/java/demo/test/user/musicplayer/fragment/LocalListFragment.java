@@ -62,7 +62,6 @@ public class LocalListFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         activity.getPlayerService().play(position);
-        activity.getPlayerService().setPlaying(true);
         activity.updateUI(position);
 //        Log.i("tag", "onItemClick: position:" + position + " size:" + PlayerService.localList.size());
     }

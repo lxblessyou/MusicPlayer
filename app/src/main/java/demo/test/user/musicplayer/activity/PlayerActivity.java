@@ -1,6 +1,7 @@
 package demo.test.user.musicplayer.activity;
 
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -8,6 +9,9 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import org.litepal.crud.DataSupport;
+
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import demo.test.user.musicplayer.MyApp;
 import demo.test.user.musicplayer.R;
 import demo.test.user.musicplayer.bean.Mp3Info;
+import demo.test.user.musicplayer.constants.ConstantsForSelf;
 import demo.test.user.musicplayer.service.PlayerService;
 import demo.test.user.musicplayer.utils.MediaUtil;
 
@@ -24,13 +29,15 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
     private TextView tv_duration;
     private SeekBar sb_progress;
     private ImageView iv_order;
-    private ImageView iv_star;
+    private ImageView iv_like;
     private ImageView iv_prev;
     private ImageView iv_play;
     private ImageView iv_next;
     private ImageView iv_album;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    private SQLiteDatabase mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +52,7 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
     private void initView() {
         iv_album = (ImageView) findViewById(R.id.iv_album);
         iv_order = (ImageView) findViewById(R.id.iv_order);
-        iv_star = (ImageView) findViewById(R.id.iv_star);
+        iv_like = (ImageView) findViewById(R.id.iv_like);
         iv_next = (ImageView) findViewById(R.id.iv_next);
         iv_play = (ImageView) findViewById(R.id.iv_play);
         iv_prev = (ImageView) findViewById(R.id.iv_prev);
@@ -57,13 +64,18 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
         iv_play.setOnClickListener(this);
         iv_next.setOnClickListener(this);
         iv_order.setOnClickListener(this);
-        iv_star.setOnClickListener(this);
+        iv_like.setOnClickListener(this);
         sb_progress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            public void onProgressChanged(SeekBar seekBar, final int progress, boolean fromUser) {
                 if (fromUser) {
-                    publishPlayTime(progress);
-                    publishSeekBar(progress);
+                    sb_progress.setProgress(progress);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tv_current_progress.setText(MediaUtil.millToSecond(progress));
+                        }
+                    });
                 }
             }
 
@@ -81,11 +93,11 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
 
     @Override
     public void updateUI(int index) {
-//        Log.i("tag", "updateUI: " + playerService);
-        if (playerService != null) {
+//        Toast.makeText(getApplicationContext(), "index"+index+"\nplayerService"+playerService+"\nPlayerService.localList.size()"+PlayerService.localList.size(), Toast.LENGTH_SHORT).show();
+        if (playerService != null && PlayerService.localList.size() > 0) {
             Mp3Info mp3Info = PlayerService.localList.get(index);
             String title = mp3Info.getTitle();
-            long id = mp3Info.get_id();
+            long id = mp3Info.getSong_id();
             long albumId = mp3Info.getAlbumId();
             long duration = mp3Info.getDuration();
             int currentProgress = playerService.getCurrentProgress();
@@ -93,8 +105,8 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
             tv_current_progress.setText(MediaUtil.millToSecond(currentProgress));
             tv_duration.setText(MediaUtil.millToSecond(duration));
             sb_progress.setMax((int) mp3Info.getDuration());
-            setBottomPlayBtnState();
-            iv_album.setImageBitmap(MediaUtil.getArtwork(this,id,albumId,true,false));
+            setPlayBtnState();
+            iv_album.setImageBitmap(MediaUtil.getArtwork(this, id, albumId, true, false));
             switch (playerService.getOrderMode()) {
                 case PlayerService.ORDER_MODE:
                     iv_order.setImageResource(R.mipmap.order);
@@ -108,23 +120,13 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                 default:
                     break;
             }
-        }
-    }
-
-    @Override
-    public void publishSeekBar(int progress) {
-        sb_progress.setProgress(progress);
-    }
-
-    @Override
-    public void publishPlayTime(final int progress) {
-//        tv_current_progress.setText(MediaUtil.millToSecond(progress));
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                tv_current_progress.setText(MediaUtil.millToSecond(progress));
+            if (mp3Info.isSaved()) {
+                iv_like.setImageResource(R.mipmap.xin_hong);
+            } else {
+                iv_like.setImageResource(R.mipmap.xin_bai);
             }
-        });
+            playerService.setCurrentIndex(index);
+        }
     }
 
     @Override
@@ -135,41 +137,62 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                 // 修改排序
                 updateOrder();
                 break;
-            case R.id.iv_star:
-                // TODO: 18/1/5
+            case R.id.iv_like:
+                // 喜欢（收藏）按钮
+                int size = PlayerService.localList.size();
+                if (size > 0) {
+                    likeEquals();
+                } else {
+                    return;
+                }
                 break;
             case R.id.iv_prev:
                 playerService.prev();
-                playerService.setPlaying(true);
                 break;
             case R.id.iv_play:
-                if (PlayerService.mediaPlayer.isPlaying()) {
-                    playerService.pause();
-                    playerService.setPlaying(false);
-                    // 停止线程
-//                    stopExecutor();
-                } else if (!playerService.getIsFirst()) {
-                    playerService.continueToPlay();
-                    playerService.setPlaying(true);
-                    // 更新播放时长和拖动条
-//                    publishCurrentProgress();
-                } else {
-                    playerService.play(playerService.getCurrentIndex());
-                    playerService.setPlaying(true);
-                    // 更新播放时长和拖动条
-//                    publishCurrentProgress();
-                }
-//                setPlayBtnState(PlayerService.mediaPlayer.isPlaying());
+                // 播放点击
+                playClick();
                 break;
             case R.id.iv_next:
                 playerService.next();
-                playerService.setPlaying(true);
                 break;
             default:
                 break;
         }
         // 更新UI
-        updateUI(playerService.getCurrentIndex());
+//        updateUI(playerService.getCurrentIndex());
+    }
+
+    /**
+     * 喜欢（收藏）按钮
+     */
+    private void likeEquals() {
+        Mp3Info likeMp3Info = PlayerService.localList.get(playerService.getCurrentIndex());
+        if (likeMp3Info.isSaved()) {
+            iv_like.setImageResource(R.mipmap.xin_bai);
+            likeMp3Info.delete();
+            Log.i(ConstantsForSelf.TAG, "onClick: delete");
+        } else {
+            iv_like.setImageResource(R.mipmap.xin_hong);
+            likeMp3Info.save();
+            Log.i(ConstantsForSelf.TAG, "onClick: save");
+        }
+    }
+
+    /**
+     * 播放
+     */
+    private void playClick() {
+        if (PlayerService.mediaPlayer.isPlaying()) {
+            playerService.pause();
+            iv_play.setImageResource(R.mipmap.play2);
+        } else if (!playerService.getIsFirst()) {
+            playerService.continueToPlay();
+            iv_play.setImageResource(R.mipmap.pause2);
+        } else {
+            playerService.play(playerService.getCurrentIndex());
+            iv_play.setImageResource(R.mipmap.pause2);
+        }
     }
 
     /**
@@ -194,13 +217,9 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                 break;
         }
         // 2.更新 SharedPreference
-        SharedPreferences.Editor edit = MyApp.sp.edit();
-        edit.putInt(MyApp.KEY_MODE, playerService.getOrderMode());
+        SharedPreferences.Editor edit = MyApp.getSp().edit();
+        edit.putInt(ConstantsForSelf.KEY_MODE, playerService.getOrderMode());
         edit.commit();
-    }
-
-    private void stopExecutor() {
-//        executorService.shutdown();
     }
 
     private void publishCurrentProgress() {
@@ -215,16 +234,22 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        publishPlayTime(playerService.mediaPlayer.getCurrentPosition());
-                        publishSeekBar(playerService.mediaPlayer.getCurrentPosition());
+                        final int progress = playerService.mediaPlayer.getCurrentPosition();
+                        sb_progress.setProgress(progress);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tv_current_progress.setText(MediaUtil.millToSecond(progress));
+                            }
+                        });
                     }
                 }
             }
         });
     }
 
-    private void setBottomPlayBtnState() {
-        if (playerService.isPlaying()) {
+    private void setPlayBtnState() {
+        if (PlayerService.mediaPlayer.isPlaying()) {
             iv_play.setImageResource(R.mipmap.pause2);
         } else {
             iv_play.setImageResource(R.mipmap.play2);
@@ -234,11 +259,11 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
     @Override
     protected void onStop() {
         super.onStop();
-            Log.i("tag", "onStop: ");
+//        Log.i("tag", "onStop: ");
         if (executorService != null && !executorService.isShutdown()) {
             try {
-            // 1.先发出停止线程的通知
-            executorService.shutdownNow();
+                // 1.先发出停止线程的通知
+                executorService.shutdownNow();
                 if (!executorService.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
                     // 2.如果在发出通知超出指定时间是则立刻停止线程。任务执行结束返回 true
                     executorService.shutdownNow();
@@ -246,7 +271,7 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 executorService.shutdownNow();
-            }finally {
+            } finally {
                 executorService = null;
             }
         }

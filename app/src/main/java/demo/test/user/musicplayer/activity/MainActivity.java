@@ -1,12 +1,13 @@
 package demo.test.user.musicplayer.activity;
 
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -52,15 +53,27 @@ public class MainActivity extends BaseActivity {
         initBottomView();
     }
 
-
     @Override
-    public void publishSeekBar(int progress) {
-
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.other,menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
-    public void publishPlayTime(int progress) {
-
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent = null;
+        switch (item.getItemId()) {
+            case R.id.menu_like:
+                intent = new Intent(this,LikeActivity.class);
+                break;
+            case R.id.menu_lately:
+                intent = new Intent(this,LatelyActivity.class);
+                break;
+            default:
+                break;
+        }
+        startActivity(intent);
+        return super.onOptionsItemSelected(item);
     }
 
     private void initViewPager() {
@@ -100,13 +113,10 @@ public class MainActivity extends BaseActivity {
                 int currentIndex = playerService.getCurrentIndex();
                 if (PlayerService.mediaPlayer.isPlaying()) {
                     playerService.pause();
-                    playerService.setPlaying(false);
-                } else if (!playerService.getIsFirst()){
+                } else if (!playerService.getIsFirst()) {
                     playerService.continueToPlay();
-                    playerService.setPlaying(true);
-                }else {
+                } else {
                     playerService.play(currentIndex);
-                    playerService.setPlaying(true);
                 }
                 updateUI(currentIndex);
             }
@@ -116,7 +126,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 playerService.prev();
-                playerService.setPlaying(true);
                 updateUI(playerService.getCurrentIndex());
             }
         });
@@ -125,7 +134,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 playerService.next();
-                playerService.setPlaying(true);
                 updateUI(playerService.getCurrentIndex());
             }
         });
@@ -170,25 +178,21 @@ public class MainActivity extends BaseActivity {
         }
 
     }
+
     @Override
     public void updateUI(int index) {
-        if (playerService != null) {
+        if (playerService != null && PlayerService.localList.size() > 0) {
             Mp3Info mp3Info = PlayerService.localList.get(index);
             String title = mp3Info.getTitle();
             String artist = mp3Info.getArtist();
             tv_title.setText(title);
             tv_artist.setText(artist);
-            long id = mp3Info.get_id();
+            long id = mp3Info.getSong_id();
             long albumId = mp3Info.getAlbumId();
-            civ_album.setImageBitmap(MediaUtil.getArtwork(this,id,albumId,true,true));
-//            if (!isFirst) {
-//                setPlayBtnState(PlayerService.mediaPlayer.isPlaying());
-//            }else {
-//                setPlayBtnState(false);
-//            }
+            civ_album.setImageBitmap(MediaUtil.getArtwork(this, id, albumId, true, true));
             setPlayBtnState();
+            playerService.setCurrentIndex(index);
         }
-//        isFirst = false;
     }
 
     /**
@@ -196,7 +200,7 @@ public class MainActivity extends BaseActivity {
      */
     public void setPlayBtnState() {
 //        Log.i(TAG, "setPlayBtnState: "+playerService.getIsFirst());
-        if (playerService.isPlaying()) {
+        if (PlayerService.mediaPlayer.isPlaying()) {
             iv_play.setImageResource(R.mipmap.pause);
         } else {
             iv_play.setImageResource(R.mipmap.play);
