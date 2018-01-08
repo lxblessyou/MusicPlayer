@@ -1,6 +1,5 @@
 package demo.test.user.musicplayer.bean;
 
-import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
 /**
@@ -24,7 +23,7 @@ public class Mp3Info extends DataSupport {
      * 标记字段
      */
     private int isMusic;//是否为音乐
-    private long playTime;//最近播放时间
+    private long playDate;//最近播放时间
     private int isLike; // 是否喜欢：1 喜欢  0 默认
 
     public Mp3Info() {
@@ -38,12 +37,12 @@ public class Mp3Info extends DataSupport {
         this.song_id = song_id;
     }
 
-    public long getPlayTime() {
-        return playTime;
+    public long getPlayDate() {
+        return playDate;
     }
 
-    public void setPlayTime(long playTime) {
-        this.playTime = playTime;
+    public void setPlayDate(long playDate) {
+        this.playDate = playDate;
     }
 
     public int getIsLike() {
@@ -122,7 +121,7 @@ public class Mp3Info extends DataSupport {
     public String toString() {
         return "Mp3Info{" +
                 "song_id=" + song_id +
-                ", playTime=" + playTime +
+                ", playDate=" + playDate +
                 ", isLike=" + isLike +
                 ", title='" + title + '\'' +
                 ", artist='" + artist + '\'' +

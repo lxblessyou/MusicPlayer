@@ -181,8 +181,8 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void updateUI(int index) {
-        if (playerService != null && PlayerService.localList.size() > 0) {
-            Mp3Info mp3Info = PlayerService.localList.get(index);
+        if (playerService != null && playerService.getmMusicList().size() > 0) {
+            Mp3Info mp3Info = playerService.getmMusicList().get(index);
             String title = mp3Info.getTitle();
             String artist = mp3Info.getArtist();
             tv_title.setText(title);

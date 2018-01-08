@@ -6,17 +6,15 @@ import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
+import android.support.v4.app.NotificationCompat;
+import android.widget.RemoteViews;
 
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import demo.test.user.musicplayer.MyApp;
+import demo.test.user.musicplayer.R;
 import demo.test.user.musicplayer.activity.BaseActivity;
 import demo.test.user.musicplayer.activity.MainActivity;
 import demo.test.user.musicplayer.activity.PlayerActivity;
@@ -24,12 +22,9 @@ import demo.test.user.musicplayer.bean.Mp3Info;
 import demo.test.user.musicplayer.constants.ConstantsForSelf;
 import demo.test.user.musicplayer.utils.MediaUtil;
 
-import static android.content.ContentValues.TAG;
-
 public class PlayerService extends Service {
     public static MediaPlayer mediaPlayer;
-    public static List<Mp3Info> localList;
-    public List<Mp3Info> mLikeList;
+    private List<Mp3Info> mMusicList;
     private Random mRandom;
     private int currentIndex;
     private int currentProgress;
@@ -46,6 +41,14 @@ public class PlayerService extends Service {
     private SharedPreferences mSp;
 
     private Intent mIntent;
+
+    public List<Mp3Info> getmMusicList() {
+        return mMusicList;
+    }
+
+    public void setmMusicList(List<Mp3Info> mMusicList) {
+        this.mMusicList = mMusicList;
+    }
 
     public int getOrderMode() {
         return orderMode;
@@ -67,10 +70,6 @@ public class PlayerService extends Service {
         return currentIndex;
     }
 
-    public void setmLikeList(List<Mp3Info> mLikeList) {
-        this.mLikeList = mLikeList;
-    }
-
     public PlayerService() {
     }
 
@@ -82,18 +81,18 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        // 初始化 MediaPlayer
+        // 1.初始化 MediaPlayer
         mediaPlayer = new MediaPlayer();
-        // 随机对象
+        // 2.获取本地列表
+        mMusicList = MediaUtil.getMp3Infos(this);
+        // 3.随机对象
         mRandom = new Random();
-//        Log.i(TAG, "onCreate: ");
-        // TODO: 2018-01-03 设为前台服务
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // 1.获取本地列表
-        localList = MediaUtil.getMp3Infos(this);
+        // 1.设为前台服务
+        setForeground();
         // 2.初始化SharedPreferences数据
         initPreferences();
         // 3.MediaPlayer 播放监听器
@@ -112,9 +111,16 @@ public class PlayerService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+    /**
+     * 设为前台服务
+     */
+    private void setForeground() {
+        RemoteViews remoteView = new RemoteViews("demo.test.user.musicplayer", R.layout.layout_remote);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.app_logo2)
+                .setTicker("音乐播放器")
+                .setCustomContentView(remoteView);
+        startForeground(1, builder.build());
     }
 
     /**
@@ -134,10 +140,9 @@ public class PlayerService extends Service {
      * @param index 列表索引
      */
     public void play(final int index) {
-//        Log.i("tag", "play: data " + localList.get(index).getData());
         try {
             mediaPlayer.reset();
-            mediaPlayer.setDataSource(localList.get(index).getData());
+            mediaPlayer.setDataSource(mMusicList.get(index).getData());
             mediaPlayer.prepareAsync();
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
@@ -149,7 +154,6 @@ public class PlayerService extends Service {
                     if (mainActivity != null || playerActivity != null) {
                         sendBroadcast(mIntent);
                     }
-//                    Log.i(TAG, "onPrepared: "+Thread.currentThread().getName());
                 }
             });
         } catch (IOException e) {
@@ -186,14 +190,14 @@ public class PlayerService extends Service {
             case ORDER_MODE:
                 // 有序
                 if (currentIndex == 0) {
-                    currentIndex = localList.size() - 1;
+                    currentIndex = mMusicList.size() - 1;
                 } else {
                     currentIndex++;
                 }
                 break;
             case RANDOM_MODE:
                 // 随机
-                currentIndex = mRandom.nextInt(localList.size());
+                currentIndex = mRandom.nextInt(mMusicList.size());
                 break;
             case SINGLE_MODE:
                 // 单曲(继续播放当前列表索引)
@@ -213,7 +217,7 @@ public class PlayerService extends Service {
         switch (orderMode) {
             case ORDER_MODE:
                 // 有序
-                if (currentIndex == localList.size() - 1) {
+                if (currentIndex == mMusicList.size() - 1) {
                     currentIndex = 0;
                 } else {
                     currentIndex++;
@@ -221,7 +225,7 @@ public class PlayerService extends Service {
                 break;
             case RANDOM_MODE:
                 // 随机
-                currentIndex = mRandom.nextInt(localList.size());
+                currentIndex = mRandom.nextInt(mMusicList.size());
                 break;
             case SINGLE_MODE:
                 // 单曲(继续播放当前列表索引)

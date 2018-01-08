@@ -3,14 +3,18 @@ package demo.test.user.musicplayer.activity;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
 
 import org.litepal.crud.DataSupport;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,11 +37,17 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
     private ImageView iv_prev;
     private ImageView iv_play;
     private ImageView iv_next;
-    private ImageView iv_album;
+    private ViewPager vp_play;
+//    private ImageView iv_album;
+//    private TextView tv_lrc;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private SQLiteDatabase mDb;
+    private ImageView iv_album;
+    private TextView tv_lrc;
+    private List<View> mViews;
+    private PagerAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +60,6 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
     }
 
     private void initView() {
-        iv_album = (ImageView) findViewById(R.id.iv_album);
         iv_order = (ImageView) findViewById(R.id.iv_order);
         iv_like = (ImageView) findViewById(R.id.iv_like);
         iv_next = (ImageView) findViewById(R.id.iv_next);
@@ -60,6 +69,10 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
         tv_title = (TextView) findViewById(R.id.tv_title);
         tv_current_progress = (TextView) findViewById(R.id.rl_controller);
         tv_duration = (TextView) findViewById(R.id.tv_duration);
+        vp_play = (ViewPager) findViewById(R.id.vp_play);
+        // 显示ViewPager
+        showViewPager();
+        // 播放按钮事件
         iv_prev.setOnClickListener(this);
         iv_play.setOnClickListener(this);
         iv_next.setOnClickListener(this);
@@ -91,16 +104,51 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
         });
     }
 
+    private void showViewPager() {
+        View view_album = View.inflate(this, R.layout.layout_player_album, null);
+        View view_lrc = View.inflate(this, R.layout.layout_player_lrc, null);
+        iv_album = view_album.findViewById(R.id.iv_album);
+        tv_lrc = view_lrc.findViewById(R.id.tv_lrc);
+        mViews = new ArrayList<>();
+        mViews.add(view_album);
+        mViews.add(view_lrc);
+        mAdapter = new PagerAdapter() {
+            @Override
+            public Object instantiateItem(ViewGroup container, int position) {
+                container.addView(mViews.get(position));
+                return mViews.get(position);
+            }
+
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+                container.removeView(mViews.get(position));
+            }
+
+            @Override
+            public int getCount() {
+                return mViews.size();
+            }
+
+            @Override
+            public boolean isViewFromObject(View view, Object object) {
+                return view == object;
+            }
+        };
+        vp_play.setAdapter(mAdapter);
+    }
+
     @Override
     public void updateUI(int index) {
-//        Toast.makeText(getApplicationContext(), "index"+index+"\nplayerService"+playerService+"\nPlayerService.localList.size()"+PlayerService.localList.size(), Toast.LENGTH_SHORT).show();
-        if (playerService != null && PlayerService.localList.size() > 0) {
-            Mp3Info mp3Info = PlayerService.localList.get(index);
-            String title = mp3Info.getTitle();
+//        Toast.makeText(getApplicationContext(), "index"+index+"\nplayerService"+playerService+"\nplayerService.getmMusicList().size()"+playerService.getmMusicList().size(), Toast.LENGTH_SHORT).show();
+        if (playerService != null && playerService.getmMusicList().size() > 0) {
+            Mp3Info mp3Info = playerService.getmMusicList().get(index);
             long id = mp3Info.getSong_id();
+            String artist = mp3Info.getArtist();
+            String title = mp3Info.getTitle();
             long albumId = mp3Info.getAlbumId();
             long duration = mp3Info.getDuration();
             int currentProgress = playerService.getCurrentProgress();
+            int isLike = mp3Info.getIsLike();
             tv_title.setText(title);
             tv_current_progress.setText(MediaUtil.millToSecond(currentProgress));
             tv_duration.setText(MediaUtil.millToSecond(duration));
@@ -120,7 +168,8 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                 default:
                     break;
             }
-            if (mp3Info.isSaved()) {
+            Mp3Info first = DataSupport.where("isLike = " + 1+" and song_id = "+id).findFirst(Mp3Info.class);
+            if (first!=null) {
                 iv_like.setImageResource(R.mipmap.xin_hong);
             } else {
                 iv_like.setImageResource(R.mipmap.xin_bai);
@@ -139,7 +188,7 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
                 break;
             case R.id.iv_like:
                 // 喜欢（收藏）按钮
-                int size = PlayerService.localList.size();
+                int size = playerService.getmMusicList().size();
                 if (size > 0) {
                     likeEquals();
                 } else {
@@ -159,23 +208,21 @@ public class PlayerActivity extends BaseActivity implements View.OnClickListener
             default:
                 break;
         }
-        // 更新UI
-//        updateUI(playerService.getCurrentIndex());
     }
 
     /**
      * 喜欢（收藏）按钮
      */
     private void likeEquals() {
-        Mp3Info likeMp3Info = PlayerService.localList.get(playerService.getCurrentIndex());
-        if (likeMp3Info.isSaved()) {
+        Mp3Info likeMp3Info = playerService.getmMusicList().get(playerService.getCurrentIndex());
+        if (likeMp3Info.getIsLike() == 1) {
             iv_like.setImageResource(R.mipmap.xin_bai);
+            likeMp3Info.setIsLike(0);
             likeMp3Info.delete();
-            Log.i(ConstantsForSelf.TAG, "onClick: delete");
         } else {
             iv_like.setImageResource(R.mipmap.xin_hong);
+            likeMp3Info.setIsLike(1);
             likeMp3Info.save();
-            Log.i(ConstantsForSelf.TAG, "onClick: save");
         }
     }
 

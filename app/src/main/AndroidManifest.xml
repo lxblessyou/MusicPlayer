@@ -29,10 +29,17 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".activity.PlayerActivity" />
+        <activity
+            android:name=".activity.PlayerActivity"
+            android:label="主页" />
+        <!--suppress AndroidDomInspection -->
         <activity android:name=".activity.BaseActivity" />
-        <activity android:name=".activity.LikeActivity" />
-        <activity android:name=".activity.LatelyActivity"></activity>
+        <activity
+            android:name=".activity.LikeActivity"
+            android:label="我喜欢" />
+        <activity
+            android:name=".activity.LatelyActivity"
+            android:label="最近播放" />
     </application>
 
 </manifest>
