@@ -30,4 +30,6 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:2.2.0'
     compile 'org.xutils:xutils:3.5.0'
     compile 'org.litepal.android:core:1.6.1'
+    compile files('libs/jsoup-1.11.2.jar')
+    compile 'me.wcy:lrcview:2.0.0'
 }

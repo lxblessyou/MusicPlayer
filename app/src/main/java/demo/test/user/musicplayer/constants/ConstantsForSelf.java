@@ -31,4 +31,11 @@ public interface ConstantsForSelf {
      * Intent和IntentFilter
      */
     String ACTION_UPDATE_UI_RECEIVER = "demo.test.user.musicplayer.updateui";
+    /**
+     * 网络
+     */
+    String URL_AUTHO = "http://music.baidu.com";;
+    String URL_HOT_PATH = "/top/dayhot/?pst=shouyeTop";
+    String URL_SEARCH_PATH = "/search?key=";
+    String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36";
 }

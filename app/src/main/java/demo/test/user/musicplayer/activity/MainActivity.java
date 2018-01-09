@@ -142,7 +142,7 @@ public class MainActivity extends BaseActivity {
 
     public class MyPagerAdapter extends FragmentPagerAdapter {
 
-        private final String[] TITLES = {"本地音乐", "网络曲库"};
+        private final String[] TITLES = {"本地音乐", "百度热歌榜-Top50"};
 
         public MyPagerAdapter(FragmentManager fm) {
             super(fm);
